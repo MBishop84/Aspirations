@@ -1,0 +1,28 @@
+﻿@inherits LayoutComponentBase
+
+<RadzenLayout>
+    <RadzenHeader>
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0">
+            <RadzenSidebarToggle Click="@(() => _sidebar1Expanded = !_sidebar1Expanded)" />
+            <RadzenLabel Text="Aspiration" />
+        </RadzenStack>
+    </RadzenHeader>
+    <RadzenSidebar @bind-Expanded="@_sidebar1Expanded">
+        <NavMenu />
+    </RadzenSidebar>
+    <RadzenBody>
+        @Body
+    </RadzenBody>
+    <RadzenFooter>
+        <RadzenLink Path="https://www.radzen.com" Text="Go to url" target="_blank">
+            <RadzenImage Style="width: 4%" 
+                         Path="https://www.radzen.com/assets/radzen-logo-top-b2d6e9dcacf7d344bbab515b8748c5f4d702c6c5bfc349bd9ff9003016a3a6ee.svg" />
+        </RadzenLink>
+    </RadzenFooter>
+</RadzenLayout>
+<RadzenComponents />
+
+@code {
+    bool _sidebar1Expanded = true;
+}
+

@@ -1,0 +1,47 @@
+﻿@page "/"
+@inject ApiClient ApiClient
+@inject DialogService Dialog
+
+<PageTitle>Home</PageTitle>
+
+<RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Gap="10px">
+    <RadzenImage Path="images/stoic-strategist.png" Style="width: 25%" AlternateText="stoic" />
+    <br/>
+    <RadzenText TextStyle="TextStyle.Subtitle1">@_quote.Text</RadzenText>
+    <RadzenText TextStyle="TextStyle.Subtitle2">@_quote.Author.Name</RadzenText>
+    <RadzenButton Variant="Variant.Outlined" Shade="Shade.Darker" Click="@NewQuote" Text="Refresh Quote" ButtonStyle="ButtonStyle.Secondary" />
+</RadzenStack>
+
+@code{
+    record Author(string Name);
+    record Quote(string Text, Author Author);
+
+    Quote _quote = new("Seeking Wisdom...", new Author("Unknown"));
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        await GetQuote();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task NewQuote()
+    {
+        await GetQuote();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task GetQuote()
+    {
+        try
+        {
+            _quote = await ApiClient.GetAsync<Quote>("/api/quotes/random");
+        }
+        catch (Exception ex)
+        {
+            await Dialog.Alert(ex.StackTrace, ex.Message);
+        }
+    }
+}
