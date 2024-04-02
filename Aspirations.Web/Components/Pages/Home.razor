@@ -7,7 +7,7 @@
 <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Gap="10px">
     <RadzenImage Path="images/stoic-strategist.png" Style="width: 25%" AlternateText="stoic" />
     <br/>
-    <RadzenText TextStyle="TextStyle.Subtitle1">@_quote.Text</RadzenText>
+    <RadzenText TextStyle="TextStyle.Subtitle1" Style="max-width: 50%">@_quote.Text</RadzenText>
     <RadzenText TextStyle="TextStyle.Subtitle2">@_quote.Author.Name</RadzenText>
     <RadzenButton Variant="Variant.Outlined" Shade="Shade.Darker" Click="@NewQuote" Text="Refresh Quote" ButtonStyle="ButtonStyle.Secondary" />
 </RadzenStack>

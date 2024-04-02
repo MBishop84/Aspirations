@@ -2,10 +2,11 @@
 <html lang="en">
 
 <head>
+    <title>Aspirations</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
-    <link rel="stylesheet" href="_content/Radzen.Blazor/css/software.css">
+    <link rel="stylesheet" href="_content/Radzen.Blazor/css/dark.css" id="theme">
     <link rel="stylesheet" href="bootstrap/bootstrap.min.css" />
     <link rel="stylesheet" href="app.css" />
     <link rel="stylesheet" href="Aspirations.Web.styles.css" />
@@ -16,7 +17,17 @@
 <body>
     <Routes @rendermode="InteractiveServer" />
     <script src="_framework/blazor.web.js"></script>
-    <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Radzen.Colors).Assembly.GetName().Version)"></script>
+    <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Colors).Assembly.GetName().Version)"></script>
+    <script>
+        window.onload = function() {
+            var theme = localStorage.getItem('RadzenTheme');
+            if (!theme) {
+                theme = 'software';
+            }
+            var themeLink = document.getElementById('theme');
+            themeLink.href = `_content/Radzen.Blazor/css/${theme}.css`;
+        }
+    </script>
 </body>
 
 </html>

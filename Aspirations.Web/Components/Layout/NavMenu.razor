@@ -1,6 +1,30 @@
-﻿
+﻿@inject IJSRuntime JSRuntime
+@inject NavigationManager _navigationManager
+
 <RadzenPanelMenu Multiple="true">
     <RadzenPanelMenuItem Text="Home" Path="/" Icon="psychology"></RadzenPanelMenuItem>
     <RadzenPanelMenuItem Text="Transformer" Path="/transformer" Icon="functions"></RadzenPanelMenuItem>
     @* <RadzenPanelMenuItem Text="Weather" Path="/weather" Icon="cloud"></RadzenPanelMenuItem> *@
 </RadzenPanelMenu>
+
+<RadzenDropDown TValue="string" Value="@_theme" Data="@_themes"
+                Change="@(async args => await ChangeTheme($"{args}"))" />
+@code {
+    readonly string[] _themes = ["dark", "material", "software", "humanistic", "default", "standard"];
+    string _theme = "Select Theme";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        _theme = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "RadzenTheme");
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ChangeTheme(string theme)
+    {
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "RadzenTheme", theme);
+        _navigationManager.Refresh(true);
+    }
+}

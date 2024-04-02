@@ -5,8 +5,8 @@ namespace Aspirations.ApiService.Storage
 {
     public class ApiContext : DbContext
     {
-        public DbSet<Quote> Quotes { get; set; }
-        public DbSet<Author> Authors { get; set; }
+        public DbSet<Quote> Quotes { get; init; }
+        public DbSet<Author> Authors { get; init; }
 
         protected override void OnConfiguring
             (DbContextOptionsBuilder optionsBuilder)
