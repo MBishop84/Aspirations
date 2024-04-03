@@ -6,11 +6,15 @@
     <RadzenPanelMenuItem Text="Transformer" Path="/transformer" Icon="functions"></RadzenPanelMenuItem>
     @* <RadzenPanelMenuItem Text="Weather" Path="/weather" Icon="cloud"></RadzenPanelMenuItem> *@
 </RadzenPanelMenu>
+<hr/>
+<RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center">
+    <RadzenLabel Component="ThemeSelect" Text="Change Theme" />
+    <RadzenDropDown TValue="string" Value="@_theme" Data="@_themes"
+                    Change="@(async args => await ChangeTheme($"{args}"))" Name="ThemeSelect"/>
+</RadzenStack>
 
-<RadzenDropDown TValue="string" Value="@_theme" Data="@_themes"
-                Change="@(async args => await ChangeTheme($"{args}"))" />
 @code {
-    readonly string[] _themes = ["dark", "material", "software", "humanistic", "default", "standard"];
+    readonly string[] _themes = ["dark", "software", "humanistic", "default", "standard"];
     string _theme = "Select Theme";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
