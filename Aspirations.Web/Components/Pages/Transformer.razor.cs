@@ -86,11 +86,18 @@ namespace Aspirations.Web.Components.Pages
             }
             catch (Exception ex)
             {
-                await DialogService.Alert(ex.Message, "Transform Error", new AlertOptions()
-                {
-                    OkButtonText = "OK",
-                    ShowClose = false
-                });
+                await DialogService.OpenAsync<CustomDialog>(
+                    "Transform Error",
+                    new Dictionary<string, object>
+                    {
+                        { "Type", "Error" },
+                        { "Message", $"{ex.Message}\n\n{ex.StackTrace}" }
+                    },
+                    new DialogOptions()
+                    {
+                        Width = "50vw",
+                        Height = "50vh"
+                    });
             }
         }
 
@@ -114,7 +121,7 @@ namespace Aspirations.Web.Components.Pages
         /// Converts the results of a SQL query to a C# class.
         /// </summary>
         /// <exception cref="ArgumentException">
-        /// Shows the query to run to get the appropriate results for the input in output on error.
+        /// Shows the query to run to get the appropriate results for the input on error.
         /// </exception>
         private async Task ClassFromQuery()
         {
@@ -122,7 +129,7 @@ namespace Aspirations.Web.Components.Pages
             {
                 if (string.IsNullOrEmpty(_input))
                 {
-                    throw new ArgumentException("Input is empty.");
+                    throw new ArgumentException("Input is Empty");
                 }
                 var lines = _input.Split("\n");
                 var result = new StringBuilder();
@@ -170,20 +177,18 @@ namespace Aspirations.Web.Components.Pages
             }
             catch (Exception ex)
             {
-                _output = 
-                    """
-                    /* SQL Query */
-                    SELECT
-                        ColumnName = col.column_name,
-                        ColumnDataType = col.data_type,
-                        IS_NULLABLE = col.is_nullable
-                    FROM INFORMATION_SCHEMA.TABLES tbl
-                    INNER JOIN INFORMATION_SCHEMA.COLUMNS col
-                        ON col.table_name = tbl.table_name
-                        AND col.table_schema = tbl.table_schema
-                    WHERE tbl.table_type = 'base table' and tbl.table_name = 'TableName'
-                    """;
-                await DialogService.Alert(ex.Message, "ClassFromQuery");
+                await DialogService.OpenAsync<CustomDialog>(
+                    "ClassFromQuery Error",
+                    new Dictionary<string, object>
+                    {
+                        { "Type", "ClassFromQuery" },
+                        { "Message", $"{ex.Message}\n\n{ex.StackTrace}" }
+                    },
+                    new DialogOptions()
+                    {
+                        Width = "50vw",
+                        Height = "50vh"
+                    });
             }
         }
         #endregion

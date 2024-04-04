@@ -1,0 +1,34 @@
+﻿@page "/custom_dialog/{Type}/{Message}"
+
+@switch (Type)
+{
+    case "Error":
+        <RadzenText TextStyle="TextStyle.Body1" TagName="TagName.Pre">@Message</RadzenText>
+        break;
+    case "ClassFromQuery":
+        <RadzenText TextStyle="TextStyle.Body1" TagName="TagName.Pre">@Message</RadzenText>
+        <hr/>
+        <RadzenText TextStyle="TextStyle.Body1" TagName="TagName.Pre">
+/* Please use the results of this SQL Query and replace 'TableName' with your table */
+
+SELECT
+ColumnName = col.column_name,
+    ColumnDataType = col.data_type,
+    IS_NULLABLE = col.is_nullable
+FROM INFORMATION_SCHEMA.TABLES tbl
+INNER JOIN INFORMATION_SCHEMA.COLUMNS col
+    ON col.table_name = tbl.table_name
+    AND col.table_schema = tbl.table_schema
+WHERE tbl.table_type = 'base table' and tbl.table_name = 'TableName'
+        </RadzenText>
+        break;
+    default:
+        <RadzenText TextStyle="TextStyle.Body1" TagName="TagName.Pre">Something went wrong.</RadzenText>
+        break;
+}
+
+@code
+{
+    [Parameter] public string? Type { get; set; }
+    [Parameter] public string? Message { get; set; }
+}
