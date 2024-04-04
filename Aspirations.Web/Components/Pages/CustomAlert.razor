@@ -1,0 +1,10 @@
+﻿@page "/custom_alert/{AlertType}/{AlertMessage}"
+
+<RadzenText TextStyle="TextStyle.H1" TagName="TagName.H1">@AlertType</RadzenText>
+<RadzenText TextStyle="TextStyle.Subtitle1" TagName="TagName.Pre">@AlertMessage</RadzenText>
+
+@code
+{
+    [Parameter] public string AlertType { get; set; } = "Error";
+    [Parameter] public string AlertMessage { get; set; } = "An error has occurred.";
+}

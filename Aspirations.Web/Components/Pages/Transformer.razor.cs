@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Radzen;
+using System.Text;
 
 namespace Aspirations.Web.Components.Pages
 {
@@ -35,7 +36,7 @@ namespace Aspirations.Web.Components.Pages
         {
             if (!firstRender)
                 return;
-                
+
             _height = await JS.InvokeAsync<int>("GetHeight");
             await InvokeAsync(StateHasChanged);
         }
@@ -106,6 +107,83 @@ namespace Aspirations.Web.Components.Pages
             catch (Exception ex)
             {
                 await DialogService.Alert(ex.StackTrace, ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Converts the results of a SQL query to a C# class.
+        /// </summary>
+        /// <exception cref="ArgumentException">
+        /// Shows the query to run to get the appropriate results for the input in output on error.
+        /// </exception>
+        private async Task ClassFromQuery()
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(_input))
+                {
+                    throw new ArgumentException("Input is empty.");
+                }
+                var lines = _input.Split("\n");
+                var result = new StringBuilder();
+
+                foreach (var line in lines)
+                {
+                    var properties = line.Split("\t");
+                    result.Append($"///<summary>\n/// Gets/Sets the {properties[0]}.\n///</summary>\n");
+                    switch (properties.Length)
+                    {
+                        case 1:
+                            throw new ArgumentException("Insufficient arguments.\n\n");
+                        case 2:
+                            result.Append(properties[1] switch
+                            {
+                                var a when a.Contains("int", StringComparison.OrdinalIgnoreCase) =>
+                                    $"public int {properties[0]} {{ get; set; }}\n\n",
+                                var b when b.Contains("date", StringComparison.OrdinalIgnoreCase) =>
+                                    $"public DateTime {properties[0]} {{ get; set; }}\n\n",
+                                var b when b.Contains("bit", StringComparison.OrdinalIgnoreCase) =>
+                                    $"public bool {properties[0]} {{ get; set; }}\n\n",
+                                var b when b.Contains("unique", StringComparison.OrdinalIgnoreCase) =>
+                                    $"public Guid {properties[0]} {{ get; set; }}\n\n",
+                                _ => $"public string {properties[0]} {{ get; set; }}\n\n"
+                            });
+                            break;
+                        case 3:
+                            var isNullable = properties[2].Equals("YES", StringComparison.OrdinalIgnoreCase) ? "?" : "";
+                            result.Append(properties[1] switch
+                            {
+                                var a when a.Contains("int", StringComparison.OrdinalIgnoreCase) =>
+                                    $"public int{isNullable} {properties[0]} {{ get; set; }}\n\n",
+                                var b when b.Contains("date", StringComparison.OrdinalIgnoreCase) =>
+                                    $"public DateTime{isNullable} {properties[0]} {{ get; set; }}\n\n",
+                                var b when b.Contains("bit", StringComparison.OrdinalIgnoreCase) =>
+                                    $"public bool{isNullable} {properties[0]} {{ get; set; }}\n\n",
+                                var b when b.Contains("unique", StringComparison.OrdinalIgnoreCase) =>
+                                    $"public Guid{isNullable} {properties[0]} {{ get; set; }}\n\n",
+                                _ => $"public string {properties[0]} {{ get; set; }}\n\n"
+                            });
+                            break;
+                    }
+                }
+                _output = result.ToString();
+            }
+            catch (Exception ex)
+            {
+                _output = 
+                    """
+                    /* SQL Query */
+                    SELECT
+                        ColumnName = col.column_name,
+                        ColumnDataType = col.data_type,
+                        IS_NULLABLE = col.is_nullable
+                    FROM INFORMATION_SCHEMA.TABLES tbl
+                    INNER JOIN INFORMATION_SCHEMA.COLUMNS col
+                        ON col.table_name = tbl.table_name
+                        AND col.table_schema = tbl.table_schema
+                    WHERE tbl.table_type = 'base table' and tbl.table_name = 'TableName'
+                    """;
+                await DialogService.Alert(ex.Message, "ClassFromQuery");
             }
         }
         #endregion

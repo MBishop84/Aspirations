@@ -2,7 +2,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.10.34707.107
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aspirations.AppHost", "Aspirations.AppHost\Aspirations.AppHost.csproj", "{82A6C18F-4DA8-4B4C-B40C-62BEAC56CB27}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aspirations.AppHost", "Aspirations.AppHost\Aspirations.AppHost.csproj", "{82A6C18F-4DA8-4B4C-B40C-62BEAC56CB27}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aspirations.ServiceDefaults", "Aspirations.ServiceDefaults\Aspirations.ServiceDefaults.csproj", "{C1ABC9A1-A8BC-4897-B7CC-B8A5551A82C6}"
 EndProject
