@@ -14,13 +14,13 @@
 /* Please use the results of this SQL Query and replace 'TableName' with your table */
 
 SELECT
-ColumnName = col.column_name,
-ColumnDataType = col.data_type,
-IS_NULLABLE = col.is_nullable
+    ColumnName = col.column_name,
+    ColumnDataType = col.data_type,
+    IS_NULLABLE = col.is_nullable
 FROM INFORMATION_SCHEMA.TABLES tbl
 INNER JOIN INFORMATION_SCHEMA.COLUMNS col
-ON col.table_name = tbl.table_name
-AND col.table_schema = tbl.table_schema
+    ON col.table_name = tbl.table_name
+    AND col.table_schema = tbl.table_schema
 WHERE tbl.table_type = 'base table' and tbl.table_name = 'TableName'
         </RadzenText>
         break;

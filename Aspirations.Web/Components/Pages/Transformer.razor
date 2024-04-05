@@ -84,7 +84,12 @@
                                           Click="@XmlToClass" Text="XML->Class" ButtonStyle="ButtonStyle.Primary" Style="width: 33%" />
                         </RadzenStack>
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Stretch" JustifyContent="JustifyContent.SpaceBetween" Gap="10px">
-
+                            <RadzenButton Variant="Variant.Outlined" Shade="Shade.Darker" 
+                                          Click="@JsonToXML" Text="Json->XML" ButtonStyle="ButtonStyle.Primary" Style="width: 33%" />
+                            <RadzenButton Variant="Variant.Outlined" Shade="Shade.Darker" 
+                                          Click="@XmlToJson" Text="XML->Json" ButtonStyle="ButtonStyle.Primary" Style="width: 33%" />
+                            <RadzenButton Variant="Variant.Outlined" Shade="Shade.Darker" Text="Clear" ButtonStyle="ButtonStyle.Warning"
+                                          Click="@(_ => { ClearField("_input"); ClearField("_output"); })" Style="width: 33%" />
                         </RadzenStack>
                     </RadzenStack>
                 </RadzenAccordionItem>

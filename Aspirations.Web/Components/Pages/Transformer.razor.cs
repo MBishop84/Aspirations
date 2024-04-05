@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using Radzen;
 using System.Globalization;
 using System.Text;
+using System.Xml;
 
 namespace Aspirations.Web.Components.Pages
 {
@@ -21,7 +22,7 @@ namespace Aspirations.Web.Components.Pages
 
         #region Feilds
 
-        private string _input, _output;
+        public string _input, _output;
         private int _height = 1000;
         private bool _dynamic = false;
         public string? Split, Join, BoundAll, BoundEach;
@@ -268,6 +269,67 @@ namespace Aspirations.Web.Components.Pages
                 {
                     { "Type", Enums.DialogTypes.Info },
                     { "Message", "Sorry!\nXml->Class is not yet implemented." }
+                },
+                new DialogOptions()
+                {
+                    Width = "50vw",
+                    Height = "50vh"
+                });
+        }
+
+        /// <summary>
+        /// Converts a JSON object to XML.
+        /// </summary>
+        /// <returns></returns>
+        private async Task JsonToXML()
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(_input))
+                    throw new ArgumentException("Input is Empty");
+                if (!_input.StartsWith("{"))
+                    _input = $"{{{_input}}}";
+
+                var doc = JsonConvert.DeserializeXmlNode(
+                    "{\"DefaultRoot\":" + $"{_input}}}"
+                );
+                var sw = new StringWriter();
+                var writer = new XmlTextWriter(sw)
+                {
+                    Formatting = System.Xml.Formatting.Indented
+                };
+                doc?.WriteContentTo(writer);
+                _output = sw.ToString();
+            }
+            catch (Exception ex)
+            {
+                await DialogService.OpenAsync<CustomDialog>(
+                    "JsonToXML Error",
+                    new Dictionary<string, object>
+                    {
+                        { "Type", Enums.DialogTypes.Error },
+                        { "Message", $"{ex.Message}\n{ex.StackTrace}" }
+                    },
+                    new DialogOptions()
+                    {
+                        Width = "50vw",
+                        Height = "50vh"
+                    });
+            }
+        }
+
+        /// <summary>
+        /// Converts XML to a C# class.
+        /// </summary>
+        /// <remarks>Not yet Implemented</remarks>
+        private async Task XmlToJson()
+        {
+            await DialogService.OpenAsync<CustomDialog>(
+                "XmlToJson not implemented",
+                new Dictionary<string, object>
+                {
+                    { "Type", Enums.DialogTypes.Info },
+                    { "Message", "Sorry!\nXml->Json is not yet implemented." }
                 },
                 new DialogOptions()
                 {
