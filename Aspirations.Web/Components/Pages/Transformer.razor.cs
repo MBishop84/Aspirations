@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using Newtonsoft.Json;
 using Radzen;
+using System.Globalization;
 using System.Text;
 
 namespace Aspirations.Web.Components.Pages
@@ -90,7 +92,7 @@ namespace Aspirations.Web.Components.Pages
                     "Transform Error",
                     new Dictionary<string, object>
                     {
-                        { "Type", "Error" },
+                        { "Type", Enums.DialogTypes.Error },
                         { "Message", $"{ex.Message}\n\n{ex.StackTrace}" }
                     },
                     new DialogOptions()
@@ -105,17 +107,8 @@ namespace Aspirations.Web.Components.Pages
         /// Clears the selected public field.
         /// </summary>
         /// <param name="field"></param>
-        private async Task ClearField(string field)
-        {
-            try
-            {
-                GetType().GetField(field)?.SetValue(this, default);
-            }
-            catch (Exception ex)
-            {
-                await DialogService.Alert(ex.StackTrace, ex.Message);
-            }
-        }
+        private void ClearField(string field) =>
+            GetType().GetField(field)?.SetValue(this, default);
 
         /// <summary>
         /// Converts the results of a SQL query to a C# class.
@@ -181,7 +174,7 @@ namespace Aspirations.Web.Components.Pages
                     "ClassFromQuery Error",
                     new Dictionary<string, object>
                     {
-                        { "Type", "ClassFromQuery" },
+                        { "Type", Enums.DialogTypes.ClassFromQuery },
                         { "Message", $"{ex.Message}\n\n{ex.StackTrace}" }
                     },
                     new DialogOptions()
@@ -190,6 +183,97 @@ namespace Aspirations.Web.Components.Pages
                         Height = "50vh"
                     });
             }
+        }
+
+        /// <summary>
+        /// Converts a JSON object to a C# class.
+        /// </summary>
+        /// <remarks>Useful for making objects from api responses.</remarks>
+        /// <exception cref="ArgumentException"></exception>
+        private async Task JsonToClass()
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(_input))
+                    throw new ArgumentException("Input is Empty");
+                if (!_input.StartsWith("{"))
+                    _input = $"{{{_input}}}";
+                dynamic? jsonObject = JsonConvert.DeserializeObject(_input);
+                if (jsonObject == null) return;
+                var result = new StringBuilder();
+                List<string> nestedItems = [];
+                foreach (var i in jsonObject)
+                {
+                    var nested = false;
+                    foreach (var x in i)
+                    {
+                        if (!x.HasValues) continue;
+                        var objectName = $"{i.Name}";
+                        result.AppendFormat(
+                            "///<summary>\n/// Gets/Sets the {0}.\n///</summary>\npublic {1} {0} {{ get; set; }}",
+                            i.Name,
+                            $"{char.ToUpper(objectName[0])}{objectName[1..]}");
+                        nestedItems.Add($"{char.ToUpper(objectName[0])}{objectName[1..]}");
+                        nested = true;
+                    }
+
+                    if (nested)
+                    {
+                        result.Append("}\n");
+                        continue;
+                    }
+                    result.AppendFormat("///<summary>\n/// Gets/Sets the {0}.\n///</summary>\n", i.Name);
+                    result.Append($"{i.Value}" switch
+                    {
+                        var a when int.TryParse(a, out var itemInt) =>
+                            $"public int {i.Name} {{ get; set; }}\n\n",
+                        var b when DateTime.TryParse(b, CultureInfo.InvariantCulture, DateTimeStyles.None, out var itemDate) =>
+                            $"public DateTime? {i.Name} {{ get; set; }}\n\n",
+                        var c when bool.TryParse(c, out var iBool) =>
+                            $"public bool {i.Name} {{ get; set; }}\n\n",
+                        _ => $"public string {i.Name} {{ get; set; }} = string.Empty;\n\n"
+                    });
+                }
+                _output = result.ToString();
+                if(nestedItems.Any())
+                    throw new ArgumentException(
+                        $"Nested objects are not fully supported.\n\n{string.Join("\n\t",nestedItems)}\n\nHave been added as objects.");
+            }
+            catch (Exception ex)
+            {
+                await DialogService.OpenAsync<CustomDialog>(
+                    "JsonToClass Error",
+                    new Dictionary<string, object>
+                    {
+                        { "Type", Enums.DialogTypes.Error },
+                        { "Message", $"{ex.Message}\n{ex.StackTrace}" }
+                    },
+                    new DialogOptions()
+                    {
+                        Width = "50vw",
+                        Height = "50vh"
+                    });
+            }
+        }
+
+        /// <summary>
+        /// Converts XML to a C# class.
+        /// </summary>
+        /// <remarks>Not yet Implemented</remarks>
+        private async Task XmlToClass()
+        {
+            await DialogService.OpenAsync<CustomDialog>(
+                "XmlToClass not implemented",
+                new Dictionary<string, object>
+                {
+                    { "Type", Enums.DialogTypes.Info },
+                    { "Message", "Sorry!\nXml->Class is not yet implemented." }
+                },
+                new DialogOptions()
+                {
+                    Width = "50vw",
+                    Height = "50vh"
+                });
         }
         #endregion
     }

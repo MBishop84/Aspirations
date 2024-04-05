@@ -2,33 +2,54 @@
 
 @switch (Type)
 {
-    case "Error":
-        <RadzenText TextStyle="TextStyle.Body1" TagName="TagName.Pre">@Message</RadzenText>
+    case Enums.DialogTypes.Error:
+        <RadzenText TextStyle="TextStyle.Body1" TagName="TagName.Pre">
+            @Message
+        </RadzenText>
         break;
-    case "ClassFromQuery":
+    case Enums.DialogTypes.ClassFromQuery:
         <RadzenText TextStyle="TextStyle.Body1" TagName="TagName.Pre">@Message</RadzenText>
-        <hr/>
+        <hr />
         <RadzenText TextStyle="TextStyle.Body1" TagName="TagName.Pre">
 /* Please use the results of this SQL Query and replace 'TableName' with your table */
 
 SELECT
 ColumnName = col.column_name,
-    ColumnDataType = col.data_type,
-    IS_NULLABLE = col.is_nullable
+ColumnDataType = col.data_type,
+IS_NULLABLE = col.is_nullable
 FROM INFORMATION_SCHEMA.TABLES tbl
 INNER JOIN INFORMATION_SCHEMA.COLUMNS col
-    ON col.table_name = tbl.table_name
-    AND col.table_schema = tbl.table_schema
+ON col.table_name = tbl.table_name
+AND col.table_schema = tbl.table_schema
 WHERE tbl.table_type = 'base table' and tbl.table_name = 'TableName'
         </RadzenText>
         break;
+    case Enums.DialogTypes.Info:
+    case Enums.DialogTypes.Warning:
+    case Enums.DialogTypes.Success:
+    case null:
+        @if (Message is not null)
+        {
+            <RadzenText TextStyle="TextStyle.Body1" TagName="TagName.Pre">
+                @Message
+            </RadzenText>
+        }
+        else
+        {
+            <RadzenText TextStyle="TextStyle.Body1" TagName="TagName.Pre">
+                Something went wrong!
+            </RadzenText>
+        }
+        break;
     default:
-        <RadzenText TextStyle="TextStyle.Body1" TagName="TagName.Pre">Something went wrong.</RadzenText>
+        <RadzenText TextStyle="TextStyle.Body1" TagName="TagName.Pre">
+            Something went wrong!
+        </RadzenText>
         break;
 }
 
 @code
 {
-    [Parameter] public string? Type { get; set; }
+    [Parameter] public Enums.DialogTypes? Type { get; set; }
     [Parameter] public string? Message { get; set; }
 }
