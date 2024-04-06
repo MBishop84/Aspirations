@@ -5,6 +5,7 @@ using Radzen;
 using System.Globalization;
 using System.Text;
 using System.Xml;
+using Formatting = Newtonsoft.Json.Formatting;
 
 namespace Aspirations.Web.Components.Pages
 {
@@ -236,9 +237,9 @@ namespace Aspirations.Web.Components.Pages
                     });
                 }
                 _output = result.ToString();
-                if(nestedItems.Any())
+                if (nestedItems.Any())
                     throw new ArgumentException(
-                        $"Nested objects are not fully supported.\n\n{string.Join("\n\t",nestedItems)}\n\nHave been added as objects.");
+                        $"Nested objects are not fully supported.\n\n{string.Join("\n\t", nestedItems)}\n\nHave been added as objects.");
             }
             catch (Exception ex)
             {
@@ -263,18 +264,101 @@ namespace Aspirations.Web.Components.Pages
         /// <remarks>Not yet Implemented</remarks>
         private async Task XmlToClass()
         {
-            await DialogService.OpenAsync<CustomDialog>(
-                "XmlToClass not implemented",
-                new Dictionary<string, object>
+            try
+            {
+                var xml = new XmlDocument();
+                xml.LoadXml(_input);
+                var result = new StringBuilder();
+                var xmlRoot = xml.DocumentElement;
+
+                if(xmlRoot == null)
+                    throw new ArgumentException("XML must have a root element");
+
+                result.Append(
+                    $"public class {xmlRoot.Name}\n{{\n");
+
+                foreach (XmlNode node in xmlRoot.ChildNodes)
                 {
-                    { "Type", Enums.DialogTypes.Info },
-                    { "Message", "Sorry!\nXml->Class is not yet implemented." }
-                },
-                new DialogOptions()
+                    if (node.NodeType == XmlNodeType.Comment) continue;
+                    if(string.IsNullOrEmpty(node.InnerText) || node.ChildNodes.Count > 1)
+                    {
+                        result.AppendFormat(
+                            "///<summary>\n/// Gets/Sets the {0}.\n///</summary>\npublic {1} {0} {{ get; set; }}\n",
+                            node.Name,
+                            $"{char.ToUpper(node.Name[0])}{node.Name[1..]}");
+                    }
+                    else
+                    {
+                        result.AppendFormat(
+                            "///<summary>\n/// Gets/Sets the {0}.\n///</summary>\npublic {1} {0} {{ get; set; }} = {2};\n",
+                            node.Name,
+                            node.InnerText switch
+                            {
+                                var a when int.TryParse(a, out var itemInt) => "int",
+                                var b when DateTime.TryParse(b, CultureInfo.InvariantCulture, DateTimeStyles.None, out var itemDate) => "DateTime",
+                                var c when bool.TryParse(c, out var iBool) => "bool",
+                                _ => "string"
+                            },
+                            node.InnerText switch
+                            {
+                                var a when int.TryParse(a, out var itemInt) => "0",
+                                var b when DateTime.TryParse(b, CultureInfo.InvariantCulture, DateTimeStyles.None, out var itemDate) => "DateTime.MinValue",
+                                var c when bool.TryParse(c, out var iBool) => "false",
+                                _ => "string.Empty"
+                            });
+                    }
+                }
+                result.Append("}\n");
+                _output = result.ToString();
+            }
+            catch (XmlException ex)
+            {
+                if (ex.Message.Contains("multiple root elements"))
                 {
-                    Width = "50vw",
-                    Height = "50vh"
-                });
+                    await DialogService.OpenAsync<CustomDialog>(
+                        "XmlToClass Error",
+                        new Dictionary<string, object>
+                        {
+                            { "Type", Enums.DialogTypes.Error },
+                            { "Message", $"{ex.Message}\n\nPlease add an outer root element." }
+                        },
+                        new DialogOptions()
+                        {
+                            Width = "50vw",
+                            Height = "50vh"
+                        });
+                }
+                else
+                {
+                    await DialogService.OpenAsync<CustomDialog>(
+                        "XmlToClass Error",
+                        new Dictionary<string, object>
+                        {
+                            { "Type", Enums.DialogTypes.Error },
+                            { "Message", $"{ex.Message}\n{ex.StackTrace}" }
+                        },
+                        new DialogOptions()
+                        {
+                            Width = "50vw",
+                            Height = "50vh"
+                        });
+                }
+            }
+            catch(Exception ex)
+            {
+                await DialogService.OpenAsync<CustomDialog>(
+                    "XmlToClass Error",
+                    new Dictionary<string, object>
+                    {
+                        { "Type", Enums.DialogTypes.Error },
+                        { "Message", $"{ex.Message}\n{ex.StackTrace}" }
+                    },
+                    new DialogOptions()
+                    {
+                        Width = "50vw",
+                        Height = "50vh"
+                    });
+            }
         }
 
         /// <summary>
@@ -324,18 +408,29 @@ namespace Aspirations.Web.Components.Pages
         /// <remarks>Not yet Implemented</remarks>
         private async Task XmlToJson()
         {
-            await DialogService.OpenAsync<CustomDialog>(
-                "XmlToJson not implemented",
-                new Dictionary<string, object>
-                {
-                    { "Type", Enums.DialogTypes.Info },
-                    { "Message", "Sorry!\nXml->Json is not yet implemented." }
-                },
-                new DialogOptions()
-                {
-                    Width = "50vw",
-                    Height = "50vh"
-                });
+            try
+            {
+                if (string.IsNullOrEmpty(_input))
+                    throw new ArgumentException("Input is Empty");
+                var doc = new XmlDocument();
+                doc.LoadXml(_input);
+                _output = JsonConvert.SerializeXmlNode(doc, Formatting.Indented);
+            }
+            catch (Exception ex)
+            {
+                await DialogService.OpenAsync<CustomDialog>(
+                    "XmlToJson Error",
+                    new Dictionary<string, object>
+                    {
+                        { "Type", Enums.DialogTypes.Error },
+                        { "Message", $"{ex.Message}\n{ex.StackTrace}" }
+                    },
+                    new DialogOptions()
+                    {
+                        Width = "50vw",
+                        Height = "50vh"
+                    });
+            }
         }
         #endregion
     }
