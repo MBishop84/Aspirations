@@ -24,6 +24,19 @@ INNER JOIN INFORMATION_SCHEMA.COLUMNS col
 WHERE tbl.table_type = 'base table' and tbl.table_name = 'TableName'
         </RadzenText>
         break;
+    case Enums.DialogTypes.XmlToClass:
+        <RadzenText TextStyle="TextStyle.Body1" TagName="TagName.Pre">@Message</RadzenText>
+        <hr />
+        <RadzenText TextStyle="TextStyle.Body1" TagName="TagName.Pre">
+&lt;!-- This is a very basic converter and works best with a simple xml like this --&gt;
+&lt;Person&gt;
+    &lt;FirstName>Luke&lt;/FirstName&gt;
+    &lt;LastName&gt;Skywalker&lt;/LastName&gt;
+    &lt;DateOfBirth>May 25, 1977&lt;/DateOfBirth&gt;
+    &lt;Age&gt;47&lt;/Age&gt;
+&lt;/Person&gt;
+        </RadzenText>
+        break;
     case Enums.DialogTypes.Info:
     case Enums.DialogTypes.Warning:
     case Enums.DialogTypes.Success:

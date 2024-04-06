@@ -261,11 +261,19 @@ namespace Aspirations.Web.Components.Pages
         /// <summary>
         /// Converts XML to a C# class.
         /// </summary>
-        /// <remarks>Not yet Implemented</remarks>
+        /// <exception cref="ArgumentException">
+        /// Error dialog displays the error with an example of what this function works best with.
+        /// </exception>
         private async Task XmlToClass()
         {
             try
             {
+                if (string.IsNullOrEmpty(_input))
+                    throw new ArgumentException("Input is Empty");
+
+                if(_input.Contains("&lt;") || _input.Contains("&gt;"))
+                    _input = _input.Replace("&lt;", "<").Replace("&gt;", ">");
+
                 var xml = new XmlDocument();
                 xml.LoadXml(_input);
                 var result = new StringBuilder();
@@ -283,14 +291,14 @@ namespace Aspirations.Web.Components.Pages
                     if(string.IsNullOrEmpty(node.InnerText) || node.ChildNodes.Count > 1)
                     {
                         result.AppendFormat(
-                            "///<summary>\n/// Gets/Sets the {0}.\n///</summary>\npublic {1} {0} {{ get; set; }}\n",
+                            "\t///<summary>\n\t/// Gets/Sets the {0}.\n\t///</summary>\n\tpublic {1} {0} {{ get; set; }}\n\n",
                             node.Name,
                             $"{char.ToUpper(node.Name[0])}{node.Name[1..]}");
                     }
                     else
                     {
                         result.AppendFormat(
-                            "///<summary>\n/// Gets/Sets the {0}.\n///</summary>\npublic {1} {0} {{ get; set; }} = {2};\n",
+                            "\t///<summary>\n\t/// Gets/Sets the {0}.\n\t///</summary>\n\tpublic {1} {0} {{ get; set; }} = {2};\n\n",
                             node.Name,
                             node.InnerText switch
                             {
@@ -308,50 +316,20 @@ namespace Aspirations.Web.Components.Pages
                             });
                     }
                 }
-                result.Append("}\n");
+                result.Append("}");
                 _output = result.ToString();
-            }
-            catch (XmlException ex)
-            {
-                if (ex.Message.Contains("multiple root elements"))
-                {
-                    await DialogService.OpenAsync<CustomDialog>(
-                        "XmlToClass Error",
-                        new Dictionary<string, object>
-                        {
-                            { "Type", Enums.DialogTypes.Error },
-                            { "Message", $"{ex.Message}\n\nPlease add an outer root element." }
-                        },
-                        new DialogOptions()
-                        {
-                            Width = "50vw",
-                            Height = "50vh"
-                        });
-                }
-                else
-                {
-                    await DialogService.OpenAsync<CustomDialog>(
-                        "XmlToClass Error",
-                        new Dictionary<string, object>
-                        {
-                            { "Type", Enums.DialogTypes.Error },
-                            { "Message", $"{ex.Message}\n{ex.StackTrace}" }
-                        },
-                        new DialogOptions()
-                        {
-                            Width = "50vw",
-                            Height = "50vh"
-                        });
-                }
             }
             catch(Exception ex)
             {
+                var message = $"{ex.Message}\n{ex.StackTrace}";
+                if (ex.Message.Contains("multiple root elements"))
+                    message = $"{ex.Message}\n\nPlease add an outer root element.";
                 await DialogService.OpenAsync<CustomDialog>(
                     "XmlToClass Error",
                     new Dictionary<string, object>
                     {
-                        { "Type", Enums.DialogTypes.Error },
-                        { "Message", $"{ex.Message}\n{ex.StackTrace}" }
+                        { "Type", Enums.DialogTypes.XmlToClass },
+                        { "Message", message }
                     },
                     new DialogOptions()
                     {

@@ -8,7 +8,8 @@
             Warning,
             Error,
             Success,
-            ClassFromQuery
+            ClassFromQuery,
+            XmlToClass
         }
     }
 }
