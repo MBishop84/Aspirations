@@ -29,7 +29,8 @@ namespace Aspirations.ApiService.Storage
                 e.Property(p => p.Text);
                 e.HasOne(p => p.Author)
                     .WithMany()
-                    .HasForeignKey(fk => fk.Id);
+                    .HasForeignKey(fk => fk.AuthorId)
+                    .HasPrincipalKey(pk => pk.Id);
             });
         }
     }

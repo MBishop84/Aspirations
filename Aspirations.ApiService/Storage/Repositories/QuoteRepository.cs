@@ -21,17 +21,24 @@ namespace Aspirations.ApiService.Storage.Repositories
             if (quotes == null)
                 throw new ArgumentException("Problem loading quotes");
 
-            _context.Quotes.AttachRange(quotes.Select(x =>
-                 new Quote
-                 {
-                     Text = x.Text,
-                     Author = new Author
-                     {
-                         Name = x.Author.Name
-                     }
-                 }
+            var authors = AddAuthors(quotes);
+
+            _context.Quotes.AddRange(quotes.Select(q => 
+                new Quote
+                {
+                    Text = q.Text,
+                    AuthorId = authors.First(a => a.Name == q.Author.Name).Id
+                }
             ));
             _context.SaveChanges();
+        }
+
+        private IEnumerable<Author> AddAuthors(IEnumerable<Quote>? quotes)
+        {
+            var authors = quotes.Select(q => q.Author).Distinct().Select(a => new Author() { Name = a.Name });
+            _context.Authors.AttachRange(authors);
+            _context.SaveChanges();
+            return _context.Authors;
         }
 
         public async Task<Quote> GetRandomQuoteAsync()
