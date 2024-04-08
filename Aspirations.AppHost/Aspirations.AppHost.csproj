@@ -7,10 +7,18 @@
     <Nullable>enable</Nullable>
     <IsAspireHost>true</IsAspireHost>
     <ApplicationIcon>favicon.ico</ApplicationIcon>
+    <PackageIcon>favicon.ico</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <Content Include="favicon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\Aspirations.Web\wwwroot\favicon.ico">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

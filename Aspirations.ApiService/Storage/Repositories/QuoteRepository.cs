@@ -98,20 +98,5 @@ namespace Aspirations.ApiService.Storage.Repositories
                 Quotes = await _context.Quotes.CountAsync()
             };
         }
-
-        public Task DeleteQuoteAsync(string id)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<IEnumerable<Quote>> GetQuotesAsync(int count)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<Quote> UpdateQuoteAsync(Quote quote)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

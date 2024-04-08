@@ -94,7 +94,7 @@
                     </RadzenStack>
                 </RadzenAccordionItem>
                 <RadzenAccordionItem Text="JavaScript" Icon="code">
-
+                    <StandaloneCodeEditor Id="user_code" ConstructionOptions="EditorConstructionOptions" @ref="_editor"/>
                 </RadzenAccordionItem>
             </Items>
         </RadzenAccordion>
@@ -110,5 +110,8 @@
 <script type="text/javascript">
     function GetHeight() {
         return document.getElementById('container').offsetHeight;
+    };
+    function runUserScript(userCode) {
+        eval(userCode);
     };
 </script>

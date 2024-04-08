@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using BlazorMonaco.Editor;
+using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Newtonsoft.Json;
 using Radzen;
@@ -23,9 +24,11 @@ namespace Aspirations.Web.Components.Pages
 
         #region Feilds
 
+        private StandaloneCodeEditor _editor { get; set; }
+        private List<string> MonacoThemes;
         public string _input, _output;
         private int _height = 1000;
-        private bool _dynamic = false;
+        private bool _dynamic;
         public string? Split, Join, BoundAll, BoundEach;
 
         #endregion
@@ -42,6 +45,15 @@ namespace Aspirations.Web.Components.Pages
                 return;
 
             _height = await JS.InvokeAsync<int>("GetHeight");
+            var theme = await JS.InvokeAsync<string>("localStorage.getItem", "MonacoTheme");
+            if (string.IsNullOrEmpty(theme))
+            {
+                await ChangeTheme("vs-dark");
+            }
+            else
+            {
+                await ChangeTheme(theme);
+            }
             await InvokeAsync(StateHasChanged);
         }
 
@@ -408,6 +420,43 @@ namespace Aspirations.Web.Components.Pages
                         Width = "50vw",
                         Height = "50vh"
                     });
+            }
+        }
+
+        private StandaloneEditorConstructionOptions EditorConstructionOptions(StandaloneCodeEditor editor)
+        {
+            return new StandaloneEditorConstructionOptions
+            {
+                AutomaticLayout = true,
+                Language = "javascript",
+                Value = "//Input User Code\noutput = input;",
+                TabSize = 2,
+                DetectIndentation = true,
+                TrimAutoWhitespace = true,
+                WordBasedSuggestionsOnlySameLanguage = true,
+                StablePeek = true
+            };
+        }
+
+        private async Task ChangeTheme(string theme)
+        {
+            try
+            {
+                var myTheme = theme;
+                if (!new[] { "vs-dark", "vs-light" }.Contains(theme))
+                {
+                    await Global.DefineTheme(JS, "thisTheme",
+                        JsonConvert.DeserializeObject<StandaloneThemeData>(
+                            await File.ReadAllTextAsync($"wwwroot/themes/{theme}.json")));
+                    myTheme = "thisTheme";
+                }
+
+                await Global.SetTheme(JS, myTheme);
+                await JS.InvokeVoidAsync("localStorage.setItem", "MonacoTheme", theme);
+            }
+            catch (Exception ex)
+            {
+                await DialogService.Alert(ex.StackTrace, ex.Message);
             }
         }
         #endregion

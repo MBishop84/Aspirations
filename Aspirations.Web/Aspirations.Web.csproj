@@ -5,13 +5,22 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <ApplicationIcon>wwwroot\favicon.ico</ApplicationIcon>
+    <PackageIcon>favicon.ico</PackageIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\favicon.ico">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Aspirations.ServiceDefaults\Aspirations.ServiceDefaults.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="BlazorMonaco" Version="3.2.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Radzen.Blazor" Version="4.29.1" />
   </ItemGroup>

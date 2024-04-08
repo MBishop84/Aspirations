@@ -21,6 +21,10 @@ namespace Aspirations.ApiService.Storage
             {
                 e.HasKey(k => k.Id).HasAnnotation("SqlServer:Identity", "1, 1");
                 e.Property(p => p.Name);
+                e.HasMany(p => p.Quotes)
+                    .WithOne()
+                    .HasForeignKey(fk => fk.AuthorId)
+                    .HasPrincipalKey(pk => pk.Id);
             });
 
             modelBuilder.Entity<Quote>(e =>
