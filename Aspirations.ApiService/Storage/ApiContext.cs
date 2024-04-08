@@ -19,13 +19,13 @@ namespace Aspirations.ApiService.Storage
         {
             modelBuilder.Entity<Author>(e =>
             {
-                e.HasKey(k => k.Id);
+                e.HasKey(k => k.Id).HasAnnotation("SqlServer:Identity", "1, 1");
                 e.Property(p => p.Name);
             });
 
             modelBuilder.Entity<Quote>(e =>
             {
-                e.HasKey(k => k.Id);
+                e.HasKey(k => k.Id).HasAnnotation("SqlServer:Identity", "1, 1");
                 e.Property(p => p.Text);
                 e.HasOne(p => p.Author)
                     .WithMany()

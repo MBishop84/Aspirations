@@ -16,7 +16,11 @@ builder.Services.AddOutputCache();
 
 builder.Services
     .AddHttpClient()
-    .AddHttpClient<ApiClient>(client => client.BaseAddress = new("http://apiservice"));
+    .AddHttpClient<ApiClient>(client =>
+    {
+        client.BaseAddress = new("http://apiservice");
+        client.DefaultRequestHeaders.Add("Accept", "application/json");
+    });
 
 builder.Services
     .AddRadzenComponents();
