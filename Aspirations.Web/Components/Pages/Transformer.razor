@@ -1,9 +1,10 @@
 ﻿@page "/transformer"
+@using System.Collections.Immutable
 
 <PageTitle>Transformer</PageTitle>
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Stretch" JustifyContent="JustifyContent.Stretch" Gap="10px">
     <RadzenFieldset Text="Input" Style="width: 33%">
-        <RadzenTextArea @bind-Value="@_input" id="input" class="w-100" Rows="@(_height / 22)" />
+        <RadzenTextArea @bind-Value="@Input" id="input" class="w-100" Rows="@(_height / 22)" />
     </RadzenFieldset>
     <RadzenFieldset Text="Transforms" Style="width: 33%; height: 85vh" id="container">
         <RadzenAccordion>
@@ -68,8 +69,10 @@
                             <RadzenTextBox @bind-Value="@BoundEach" TValue="string?" Placeholder="User B-Each" Style="width: 90%" />
                         </RadzenStack>
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Gap="10px">
-                            <RadzenButton Variant="Variant.Outlined" Shade="Shade.Darker" 
-                                          Click="@Transform" Text="Transform" ButtonStyle="ButtonStyle.Secondary" Style="width: 29%" />
+                            <RadzenLabel Component="SortCheck" Text="Sort?" />
+                            <RadzenCheckBox @bind-Value="@_sort" TValue="bool" Name="SortCheck" />
+                            <RadzenButton Variant="Variant.Outlined" Shade="Shade.Darker"
+                                          Click="@Transform" Text="Transform" ButtonStyle="ButtonStyle.Secondary" Style="width: 29%"/>
                         </RadzenStack>
                     </RadzenStack>
                 </RadzenAccordionItem>
@@ -89,12 +92,40 @@
                             <RadzenButton Variant="Variant.Outlined" Shade="Shade.Darker" 
                                           Click="@XmlToJson" Text="XML->Json" ButtonStyle="ButtonStyle.Primary" Style="width: 33%" />
                             <RadzenButton Variant="Variant.Outlined" Shade="Shade.Darker" Text="Clear" ButtonStyle="ButtonStyle.Warning"
-                                          Click="@(_ => { ClearField("_input"); ClearField("_output"); })" Style="width: 33%" />
+                                          Click="@(_ => { ClearField("Input"); ClearField("Output"); })" Style="width: 33%" />
                         </RadzenStack>
                     </RadzenStack>
                 </RadzenAccordionItem>
                 <RadzenAccordionItem Text="JavaScript" Icon="code">
-                    <StandaloneCodeEditor Id="user_code" ConstructionOptions="EditorConstructionOptions" @ref="_editor"/>
+                    <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Stretch" JustifyContent="JustifyContent.SpaceBetween" class="w-100">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Stretch" JustifyContent="JustifyContent.SpaceBetween" class="w-100">
+                            <RadzenDropDown Data="@JsTransforms"
+                                            Placeholder="Saved Transforms"
+                                            Style="width: 29%"
+                                            TValue="JsTransform"
+                                            TextProperty="Name"
+                                            ValueProperty="Code"
+                                            Change="@(async x => await UpdateUserCode($"{x}"))" />
+                            <RadzenButton Variant="Variant.Outlined" Shade="Shade.Darker"
+                                          Click="@PreviousJs" Text="<Prev" ButtonStyle="ButtonStyle.Info" Style="width: 15%" />
+                            <RadzenButton Variant="Variant.Outlined" Shade="Shade.Darker"
+                                          Click="@NextJs" Text="Next>" ButtonStyle="ButtonStyle.Info" Style="width: 15%" />
+                            <RadzenButton Variant="Variant.Outlined" Shade="Shade.Darker" Icon="save"
+                                          Click="@SaveJs" Text="Save" ButtonStyle="ButtonStyle.Secondary" Style="width: 29%" />
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Stretch" JustifyContent="JustifyContent.SpaceBetween" class="w-100">
+                            <RadzenDropDown Data="@MonacoThemes"
+                                            Style="width: 29%"
+                                            TValue="string"
+                                            Value="@MonacoTheme"
+                                            Change="@(async x => await ChangeTheme($"{x}"))" />
+                            <RadzenButton Variant="Variant.Outlined" Shade="Shade.Darker" Icon="delete" Style="width: 29%"
+                                          Click="@DeleteJs" Text="Delete" ButtonStyle="ButtonStyle.Danger" />
+                            <RadzenButton Variant="Variant.Outlined" Shade="Shade.Darker" Style="width: 29%"
+                                          Click="@JavaScript" Text="Execute" ButtonStyle="ButtonStyle.Success" />
+                        </RadzenStack>
+                        <StandaloneCodeEditor Id="user_code" ConstructionOptions="EditorConstructionOptions" @ref="_editor" />
+                    </RadzenStack>
                 </RadzenAccordionItem>
             </Items>
         </RadzenAccordion>
@@ -104,7 +135,7 @@
         </RadzenStack>
     </RadzenFieldset>
     <RadzenFieldset Text="Output" Style="width: 33%">
-        <RadzenTextArea @bind-Value="@_output" id="output" class="w-100" Rows="@(_height / 22)" />
+        <RadzenTextArea @bind-Value="@Output" id="output" class="w-100" Rows="@(_height / 22)"/>
     </RadzenFieldset>
 </RadzenStack>
 <script type="text/javascript">

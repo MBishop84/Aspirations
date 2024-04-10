@@ -7,6 +7,7 @@ namespace Aspirations.ApiService.Storage
     {
         public DbSet<Quote> Quotes { get; init; }
         public DbSet<Author> Authors { get; init; }
+        public DbSet<JsTransform> JsTransforms { get; init; }
 
         protected override void OnConfiguring
             (DbContextOptionsBuilder optionsBuilder)
@@ -35,6 +36,15 @@ namespace Aspirations.ApiService.Storage
                     .WithMany()
                     .HasForeignKey(fk => fk.AuthorId)
                     .HasPrincipalKey(pk => pk.Id);
+            });
+
+            modelBuilder.Entity<JsTransform>(e =>
+            {
+                e.HasKey(k => k.Id).HasAnnotation("SqlServer:Identity", "1, 1");
+                e.Property(p => p.AddedBy);
+                e.Property(p => p.AddedOn);
+                e.Property(p => p.Name);
+                e.Property(p => p.Code);
             });
         }
     }

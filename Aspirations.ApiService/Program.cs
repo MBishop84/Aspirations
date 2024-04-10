@@ -28,6 +28,7 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services
     .AddProblemDetails()
     .AddDbContext<ApiContext>()
+    .AddScoped<IJsTransformsRepository, JsTransformsRepository>()
     .AddScoped<IQuoteRepository, QuoteRepository>();
 
 var app = builder.Build();
@@ -38,7 +39,8 @@ app.UseExceptionHandler();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.MapDefaultEndpoints()
-    .MapQuotesEndpoints();
+app.MapDefaultEndpoints();
+app.MapQuotesEndpoints();
+app.MapJsTransformsEndpoints();
 
 app.Run();

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Newtonsoft.Json;
 using Radzen;
+using System.Collections.Immutable;
 using System.Globalization;
 using System.Text;
 using System.Xml;
@@ -20,20 +21,44 @@ namespace Aspirations.Web.Components.Pages
         [Inject]
         private DialogService DialogService { get; init; }
 
+        [Inject]
+        private ApiClient ApiClient { get; init; }
+
         #endregion
 
         #region Feilds
-
+        private record JsTransform(string Name, string Code);
         private StandaloneCodeEditor _editor { get; set; }
-        private List<string> MonacoThemes;
-        public string _input, _output;
+        private List<string> MonacoThemes = [];
+        private List<JsTransform> JsTransforms = [];
         private int _height = 1000;
-        private bool _dynamic;
-        public string? Split, Join, BoundAll, BoundEach;
+        private bool _dynamic, _sort;
+        public string? Input, Output, Split, Join, BoundAll, BoundEach, MonacoTheme;
 
         #endregion
 
         #region Methods
+
+        /// <summary>
+        /// Overrides the default behavior of OnInitializedAsync
+        /// </summary>
+        /// <returns></returns>
+        protected override async Task OnInitializedAsync()
+        {
+            await base.OnInitializedAsync();
+            try
+            {
+                MonacoThemes = Directory.GetFiles("wwwroot/themes/", "*.json")
+                    .Select(x => Path.GetFileNameWithoutExtension(x)).ToList();
+                MonacoThemes.AddRange(["vs-dark", "vs-light"]);
+                JsTransforms = await ApiClient.GetAsync<List<JsTransform>>("/api/js_transforms/all");
+            }
+            catch (Exception ex)
+            {
+                Input = ex.Message;
+                Output = ex.Message;
+            }
+        }
 
         /// <summary>
         /// Overrides the default behavior of the OnAfterRenderAsync method.
@@ -90,15 +115,23 @@ namespace Aspirations.Web.Components.Pages
                     ? string.Empty
                     : BoundEach.Split('.')[1];
 
-                _output = $"{frontBracket}{string.Join(join, _input?.Split(split).Select(x =>
+                var outputArray = Input?.Split(split).Select(x =>
                 {
                     return _dynamic switch
                     {
                         true => int.TryParse(x, out var i) || x.Equals("null", StringComparison.OrdinalIgnoreCase)
-                            ? $"{x}" : $"{frontParentheses}{x}{endParentheses}",
+                            ? $"{x}"
+                            : $"{frontParentheses}{x}{endParentheses}",
                         false => $"{frontParentheses}{x}{endParentheses}"
                     };
-                }) ?? [])}{endBracket}";
+                }) ?? [];
+
+                if (_sort)
+                {
+                    outputArray = outputArray.OrderBy(x => x).ToImmutableList();
+                }
+
+                Output = $"{frontBracket}{string.Join(join, outputArray)}{endBracket}";
             }
             catch (Exception ex)
             {
@@ -134,11 +167,11 @@ namespace Aspirations.Web.Components.Pages
         {
             try
             {
-                if (string.IsNullOrEmpty(_input))
+                if (string.IsNullOrEmpty(Input))
                 {
                     throw new ArgumentException("Input is Empty");
                 }
-                var lines = _input.Split("\n");
+                var lines = Input.Split("\n");
                 var result = new StringBuilder();
 
                 foreach (var line in lines)
@@ -180,7 +213,7 @@ namespace Aspirations.Web.Components.Pages
                             break;
                     }
                 }
-                _output = result.ToString();
+                Output = result.ToString();
             }
             catch (Exception ex)
             {
@@ -208,11 +241,11 @@ namespace Aspirations.Web.Components.Pages
         {
             try
             {
-                if (string.IsNullOrEmpty(_input))
+                if (string.IsNullOrEmpty(Input))
                     throw new ArgumentException("Input is Empty");
-                if (!_input.StartsWith("{"))
-                    _input = $"{{{_input}}}";
-                dynamic? jsonObject = JsonConvert.DeserializeObject(_input);
+                if (!Input.StartsWith("{"))
+                    Input = $"{{{Input}}}";
+                dynamic? jsonObject = JsonConvert.DeserializeObject(Input);
                 if (jsonObject == null) return;
                 var result = new StringBuilder();
                 List<string> nestedItems = [];
@@ -248,7 +281,7 @@ namespace Aspirations.Web.Components.Pages
                         _ => $"public string {i.Name} {{ get; set; }} = string.Empty;\n\n"
                     });
                 }
-                _output = result.ToString();
+                Output = result.ToString();
                 if (nestedItems.Any())
                     throw new ArgumentException(
                         $"Nested objects are not fully supported.\n\n{string.Join("\n\t", nestedItems)}\n\nHave been added as objects.");
@@ -280,18 +313,18 @@ namespace Aspirations.Web.Components.Pages
         {
             try
             {
-                if (string.IsNullOrEmpty(_input))
+                if (string.IsNullOrEmpty(Input))
                     throw new ArgumentException("Input is Empty");
 
-                if(_input.Contains("&lt;") || _input.Contains("&gt;"))
-                    _input = _input.Replace("&lt;", "<").Replace("&gt;", ">");
+                if (Input.Contains("&lt;") || Input.Contains("&gt;"))
+                    Input = Input.Replace("&lt;", "<").Replace("&gt;", ">");
 
                 var xml = new XmlDocument();
-                xml.LoadXml(_input);
+                xml.LoadXml(Input);
                 var result = new StringBuilder();
                 var xmlRoot = xml.DocumentElement;
 
-                if(xmlRoot == null)
+                if (xmlRoot == null)
                     throw new ArgumentException("XML must have a root element");
 
                 result.Append(
@@ -300,7 +333,7 @@ namespace Aspirations.Web.Components.Pages
                 foreach (XmlNode node in xmlRoot.ChildNodes)
                 {
                     if (node.NodeType == XmlNodeType.Comment) continue;
-                    if(string.IsNullOrEmpty(node.InnerText) || node.ChildNodes.Count > 1)
+                    if (string.IsNullOrEmpty(node.InnerText) || node.ChildNodes.Count > 1)
                     {
                         result.AppendFormat(
                             "\t///<summary>\n\t/// Gets/Sets the {0}.\n\t///</summary>\n\tpublic {1} {0} {{ get; set; }}\n\n",
@@ -329,9 +362,9 @@ namespace Aspirations.Web.Components.Pages
                     }
                 }
                 result.Append("}");
-                _output = result.ToString();
+                Output = result.ToString();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 var message = $"{ex.Message}\n{ex.StackTrace}";
                 if (ex.Message.Contains("multiple root elements"))
@@ -359,13 +392,13 @@ namespace Aspirations.Web.Components.Pages
         {
             try
             {
-                if (string.IsNullOrEmpty(_input))
+                if (string.IsNullOrEmpty(Input))
                     throw new ArgumentException("Input is Empty");
-                if (!_input.StartsWith("{"))
-                    _input = $"{{{_input}}}";
+                if (!Input.StartsWith("{"))
+                    Input = $"{{{Input}}}";
 
                 var doc = JsonConvert.DeserializeXmlNode(
-                    "{\"DefaultRoot\":" + $"{_input}}}"
+                    "{\"DefaultRoot\":" + $"{Input}}}"
                 );
                 var sw = new StringWriter();
                 var writer = new XmlTextWriter(sw)
@@ -373,7 +406,7 @@ namespace Aspirations.Web.Components.Pages
                     Formatting = System.Xml.Formatting.Indented
                 };
                 doc?.WriteContentTo(writer);
-                _output = sw.ToString();
+                Output = sw.ToString();
             }
             catch (Exception ex)
             {
@@ -400,11 +433,11 @@ namespace Aspirations.Web.Components.Pages
         {
             try
             {
-                if (string.IsNullOrEmpty(_input))
+                if (string.IsNullOrEmpty(Input))
                     throw new ArgumentException("Input is Empty");
                 var doc = new XmlDocument();
-                doc.LoadXml(_input);
-                _output = JsonConvert.SerializeXmlNode(doc, Formatting.Indented);
+                doc.LoadXml(Input);
+                Output = JsonConvert.SerializeXmlNode(doc, Formatting.Indented);
             }
             catch (Exception ex)
             {
@@ -423,6 +456,11 @@ namespace Aspirations.Web.Components.Pages
             }
         }
 
+        /// <summary>
+        /// Initial settings for the Monaco Editor.
+        /// </summary>
+        /// <param name="editor"></param>
+        /// <returns><see cref="StandaloneEditorConstructionOptions"/></returns>
         private StandaloneEditorConstructionOptions EditorConstructionOptions(StandaloneCodeEditor editor)
         {
             return new StandaloneEditorConstructionOptions
@@ -438,8 +476,13 @@ namespace Aspirations.Web.Components.Pages
             };
         }
 
+        /// <summary>
+        /// Changes the color theme of the Monaco Editor
+        /// </summary>
+        /// <param name="theme"></param>
         private async Task ChangeTheme(string theme)
         {
+            MonacoTheme = theme;
             try
             {
                 var myTheme = theme;
@@ -458,6 +501,177 @@ namespace Aspirations.Web.Components.Pages
             {
                 await DialogService.Alert(ex.StackTrace, ex.Message);
             }
+        }
+
+        /// <summary>
+        /// Executes user input transform
+        /// </summary>
+        /// <exception cref="ArgumentException"></exception>
+        private async Task JavaScript()
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(Input))
+                    throw new ArgumentException("Input is Empty");
+
+                var userCode = await _editor.GetValue();
+
+                if (string.IsNullOrEmpty(userCode))
+                    throw new ArgumentException("Please enter or choose a function.");
+                if (!userCode.Contains("output ="))
+                    throw new ArgumentException("Please assign a value to output");
+                if (!userCode.Contains("= input"))
+                    throw new ArgumentException("You must use the input.");
+
+                const string userBox = "const input = document.getElementById('input').value;\nlet output = '';\n[***]\ndocument.getElementById('output').value = output;";
+                var task = JS.InvokeAsync<string>("runUserScript", userBox.Replace("[***]", userCode)).AsTask();
+                if (await Task.WhenAny(task, Task.Delay(5)) != task)
+                {
+                    throw new ArgumentException("JavaScript Timeout. Please simplify your code.");
+                }
+                await task;
+            }
+            catch (Exception ex)
+            {
+                await DialogService.OpenAsync<CustomDialog>(
+                    "JavaScript Error",
+                    new Dictionary<string, object>
+                    {
+                        { "Type", Enums.DialogTypes.Error },
+                        { "Message", $"{ex.Message}\n{ex.StackTrace}" }
+                    },
+                    new DialogOptions()
+                    {
+                        Width = "50vw",
+                        Height = "50vh"
+                    });
+            }
+        }
+
+        /// <summary>
+        /// Updates the user code from drop down selection
+        /// </summary>
+        /// <param name="jsTransform"></param>
+        private Task UpdateUserCode(string jsTransform)
+        {
+            var fullString = JsTransforms.Where(x => x.Code == jsTransform)
+                .Select(y => $"{y.Name}\n{y.Code}").FirstOrDefault();
+            return _editor.SetValue(fullString);
+        }
+
+        /// <summary>
+        /// Sets the next code in JsTransforms
+        /// </summary>
+        private async Task NextJs()
+        {
+            try
+            {
+                var userCode = await _editor.GetValue();
+                if (string.IsNullOrEmpty(userCode))
+                    userCode = $"{JsTransforms[0].Name}\n{JsTransforms[0].Code}";
+                else
+                {
+                    var index = JsTransforms.FindIndex(x => x.Name == userCode.Split("\n")[0]);
+                    userCode = index < JsTransforms.Count - 1
+                        ? $"{JsTransforms[index + 1].Name}\n{JsTransforms[index + 1].Code}"
+                        : $"{JsTransforms[0].Name}\n{JsTransforms[0].Code}";
+                }
+                await _editor.SetValue(userCode);
+            }
+            catch (Exception ex)
+            {
+                await DialogService.OpenAsync<CustomDialog>(
+                    "NextJs Error",
+                    new Dictionary<string, object>
+                    {
+                        { "Type", Enums.DialogTypes.Error },
+                        { "Message", $"{ex.Message}\n{ex.StackTrace}" }
+                    },
+                    new DialogOptions()
+                    {
+                        Width = "50vw",
+                        Height = "50vh"
+                    });
+            }
+        }
+
+        /// <summary>
+        /// Sets the last code in JsTransforms.
+        /// </summary>
+        private async Task PreviousJs()
+        {
+            try
+            {
+                var userCode = await _editor.GetValue();
+                if (string.IsNullOrEmpty(userCode))
+                    userCode = $"{JsTransforms[0].Name}\n{JsTransforms[0].Code}";
+                else
+                {
+                    var index = JsTransforms.FindIndex(x => x.Name == userCode.Split("\n")[0]);
+                    if (index > 0)
+                    {
+                        userCode = $"{JsTransforms[index - 1].Name}\n{JsTransforms[index - 1].Code}";
+                    }
+                    else
+                        userCode = $"{JsTransforms[^1].Name}\n{JsTransforms[^1].Code}";
+                }
+                await _editor.SetValue(userCode);
+            }
+            catch (Exception ex)
+            {
+                await DialogService.OpenAsync<CustomDialog>(
+                    "PreviousJs Error",
+                    new Dictionary<string, object>
+                    {
+                        { "Type", Enums.DialogTypes.Error },
+                        { "Message", $"{ex.Message}\n{ex.StackTrace}" }
+                    },
+                    new DialogOptions()
+                    {
+                        Width = "50vw",
+                        Height = "50vh"
+                    });
+            }
+        }
+
+        /// <summary>
+        /// Deletes that option.
+        /// </summary>
+        /// <returns></returns>
+        private async Task DeleteJs()
+        {
+            await DialogService.OpenAsync<CustomDialog>(
+                "DeleteJs Error",
+                new Dictionary<string, object>
+                {
+                    { "Type", Enums.DialogTypes.Error },
+                    { "Message", "Not Yet Implemented" }
+                },
+                new DialogOptions()
+                {
+                    Width = "50vw",
+                    Height = "50vh"
+                });
+        }
+
+        /// <summary>
+        /// Saves a new user code or updates an existing one.
+        /// </summary>
+        /// <returns></returns>
+        private async Task SaveJs()
+        {
+            await DialogService.OpenAsync<CustomDialog>(
+                "SaveJs Error",
+                new Dictionary<string, object>
+                {
+                    { "Type", Enums.DialogTypes.Error },
+                    { "Message", "Not Yet Implemented" }
+                },
+                new DialogOptions()
+                {
+                    Width = "50vw",
+                    Height = "50vh"
+                });
         }
         #endregion
     }
