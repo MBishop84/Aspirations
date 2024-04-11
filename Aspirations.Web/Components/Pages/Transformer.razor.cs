@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using Radzen;
 using System.Collections.Immutable;
 using System.Globalization;
+using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography;
 using System.Text;
 using System.Xml;
@@ -537,7 +538,7 @@ namespace Aspirations.Web.Components.Pages
 
                 const string userBox = "const input = document.getElementById('input').value;\nlet output = '';\n[***]\ndocument.getElementById('output').value = output;";
                 var task = JS.InvokeAsync<string>("runUserScript", userBox.Replace("[***]", userCode)).AsTask();
-                if (await Task.WhenAny(task, Task.Delay(5)) != task)
+                if (await Task.WhenAny(task, Task.Delay(1)) != task)
                 {
                     throw new ArgumentException("JavaScript Timeout. Please simplify your code.");
                 }
@@ -660,6 +661,7 @@ namespace Aspirations.Web.Components.Pages
                 var deleteMessage = $"{name} has been deleted from this instance.";
                 if (jsTransform == null)
                     throw new ArgumentException("No code found to delete.");
+
                 if (await DialogService.Confirm(
                     $"Are you sure you want to delete {name}?",
                     "Final Confirmation",
@@ -673,13 +675,14 @@ namespace Aspirations.Web.Components.Pages
 
                     if (string.IsNullOrEmpty(_entry))
                         throw new ArgumentException("Password is Empty");
+
                     using var hash = SHA256.Create();
                     if (Configuration.GetValue<string>("DeleteKey")
                         !.Equals(Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(_entry)))))
                     {
                         var response = await ApiClient.DeleteAsync($"/api/js_transforms/delete/{jsTransform.Id}");
                         response.EnsureSuccessStatusCode();
-                        deleteMessage = $"{name} has been permanently deleted from this instance.";
+                        deleteMessage = $"{name} has been permanently deleted.";
                     }
                     JsTransforms.Remove(jsTransform);
                     await _editor.SetValue(string.Empty);
@@ -743,20 +746,20 @@ namespace Aspirations.Web.Components.Pages
                         { "Message", "Please enter your name to take ownership of this transform." }
                     },
                     new DialogOptions() { Width = "600px", Height = "200px" });
+
                 if (string.IsNullOrEmpty(_entry))
                     throw new ArgumentException("Name is Empty");
 
-                var newTransform = new JsTransform(0, _entry, name, userCode);
-
                 var response = await ApiClient.PostAsync<JsTransform>(
-                    "/api/js_transforms/add", newTransform);
+                    "/api/js_transforms/add", new JsTransform(0, _entry, name, userCode));
 
                 response.EnsureSuccessStatusCode();
                 var content = await response.Content.ReadAsStringAsync();
                 JsTransforms.Add(JsonConvert.DeserializeObject<JsTransform>(content)!);
                 await InvokeAsync(StateHasChanged);
                 await DialogService.Alert(
-                    content, $"{response.StatusCode}");
+                    content.Replace(",", ",\n\t").Replace("{", "{\n\t"), 
+                    $"{response.StatusCode}");
             }
             catch (Exception ex)
             {
@@ -774,7 +777,6 @@ namespace Aspirations.Web.Components.Pages
                 });
             }
         }
-
 
         #endregion
     }
