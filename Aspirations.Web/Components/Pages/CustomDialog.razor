@@ -54,9 +54,6 @@ WHERE tbl.table_type = 'base table' and tbl.table_name = 'TableName'
             <RadzenButton Click=@(args => DialogService.Close(entry)) Text="Enter" ButtonStyle="ButtonStyle.Primary" />
         </RadzenStack>
         break;
-    case Enums.DialogTypes.Info:
-    case Enums.DialogTypes.Warning:
-    case Enums.DialogTypes.Success:
     case null:
         @if (Message is not null)
         {
@@ -70,11 +67,6 @@ WHERE tbl.table_type = 'base table' and tbl.table_name = 'TableName'
                 Something went wrong!
             </RadzenText>
         }
-        break;
-    default:
-        <RadzenText TextStyle="TextStyle.Body1" TagName="TagName.Pre">
-            Something went wrong!
-        </RadzenText>
         break;
 }
 

@@ -4,10 +4,7 @@
     {
         public enum DialogTypes
         {
-            Info,
-            Warning,
             Error,
-            Success,
             ClassFromQuery,
             XmlToClass,
             Password,

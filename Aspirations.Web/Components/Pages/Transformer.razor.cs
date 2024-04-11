@@ -157,7 +157,7 @@ namespace Aspirations.Web.Components.Pages
                     },
                     new DialogOptions()
                     {
-                        Width = "50vw",
+                        Width = "max-content",
                         Height = "50vh"
                     });
             }
@@ -239,7 +239,7 @@ namespace Aspirations.Web.Components.Pages
                     },
                     new DialogOptions()
                     {
-                        Width = "50vw",
+                        Width = "max-content",
                         Height = "50vh"
                     });
             }
@@ -310,7 +310,7 @@ namespace Aspirations.Web.Components.Pages
                     },
                     new DialogOptions()
                     {
-                        Width = "50vw",
+                        Width = "max-content",
                         Height = "50vh"
                     });
             }
@@ -391,7 +391,7 @@ namespace Aspirations.Web.Components.Pages
                     },
                     new DialogOptions()
                     {
-                        Width = "50vw",
+                        Width = "max-content",
                         Height = "50vh"
                     });
             }
@@ -432,7 +432,7 @@ namespace Aspirations.Web.Components.Pages
                     },
                     new DialogOptions()
                     {
-                        Width = "50vw",
+                        Width = "max-content",
                         Height = "50vh"
                     });
             }
@@ -463,7 +463,7 @@ namespace Aspirations.Web.Components.Pages
                     },
                     new DialogOptions()
                     {
-                        Width = "50vw",
+                        Width = "max-content",
                         Height = "50vh"
                     });
             }
@@ -480,7 +480,7 @@ namespace Aspirations.Web.Components.Pages
             {
                 AutomaticLayout = true,
                 Language = "javascript",
-                Value = "//Input User Code\noutput = input;",
+                Value = "//StarterCode\noutput = input;",
                 TabSize = 2,
                 DetectIndentation = true,
                 TrimAutoWhitespace = true,
@@ -555,7 +555,7 @@ namespace Aspirations.Web.Components.Pages
                     },
                     new DialogOptions()
                     {
-                        Width = "50vw",
+                        Width = "max-content",
                         Height = "50vh"
                     });
             }
@@ -602,7 +602,7 @@ namespace Aspirations.Web.Components.Pages
                     },
                     new DialogOptions()
                     {
-                        Width = "50vw",
+                        Width = "max-content",
                         Height = "50vh"
                     });
             }
@@ -641,7 +641,7 @@ namespace Aspirations.Web.Components.Pages
                     },
                     new DialogOptions()
                     {
-                        Width = "50vw",
+                        Width = "max-content",
                         Height = "50vh"
                     });
             }
@@ -671,7 +671,7 @@ namespace Aspirations.Web.Components.Pages
                     {
                         { "Type", Enums.DialogTypes.Password },
                         { "Message", "Please enter your key to permanently delete this code." }
-                    }, new DialogOptions() { Width = "600px", Height = "200px" });
+                    }, new DialogOptions() { Width = "max-content", Height = "200px" });
 
                     if (string.IsNullOrEmpty(_entry))
                         throw new ArgumentException("Password is Empty");
@@ -701,7 +701,7 @@ namespace Aspirations.Web.Components.Pages
                     },
                     new DialogOptions()
                     {
-                        Width = "50vw",
+                        Width = "max-content",
                         Height = "50vh"
                     });
             }
@@ -730,7 +730,7 @@ namespace Aspirations.Web.Components.Pages
                             { "Type", Enums.DialogTypes.Text },
                             { "Message", "Please name your transform." }
                         },
-                        new DialogOptions() { Width = "600px", Height = "200px" });
+                        new DialogOptions() { Width = "max-content", Height = "200px" });
                     if (string.IsNullOrEmpty(_entry))
                         throw new ArgumentException("Transform Name is Empty");
                     name = _entry.StartsWith("//") ? _entry : $"//{_entry}";
@@ -745,7 +745,7 @@ namespace Aspirations.Web.Components.Pages
                         { "Type", Enums.DialogTypes.Text },
                         { "Message", "Please enter your name to take ownership of this transform." }
                     },
-                    new DialogOptions() { Width = "600px", Height = "200px" });
+                    new DialogOptions() { Width = "max-content", Height = "200px" });
 
                 if (string.IsNullOrEmpty(_entry))
                     throw new ArgumentException("Name is Empty");
@@ -772,7 +772,7 @@ namespace Aspirations.Web.Components.Pages
                 },
                 new DialogOptions()
                 {
-                    Width = "50vw",
+                    Width = "max-content",
                     Height = "50vh"
                 });
             }
