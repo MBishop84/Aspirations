@@ -1,4 +1,5 @@
 ﻿@page "/custom_dialog/{Type}/{Message}"
+@inject DialogService DialogService
 
 @switch (Type)
 {
@@ -37,6 +38,14 @@ WHERE tbl.table_type = 'base table' and tbl.table_name = 'TableName'
 &lt;/Person&gt;
         </RadzenText>
         break;
+    case Enums.DialogTypes.Password:
+        <RadzenText TextStyle="TextStyle.Body1" TagName="TagName.Pre">@Message</RadzenText>
+        <br />
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center">
+            <RadzenPassword @bind-Value=@password Placeholder="Enter password..." aria-label="enter password" />
+            <RadzenButton Click=@(args => DialogService.Close(password)) Text="Enter" ButtonStyle="ButtonStyle.Primary" />
+        </RadzenStack>
+        break;
     case Enums.DialogTypes.Info:
     case Enums.DialogTypes.Warning:
     case Enums.DialogTypes.Success:
@@ -63,6 +72,7 @@ WHERE tbl.table_type = 'base table' and tbl.table_name = 'TableName'
 
 @code
 {
+    string password;
     [Parameter] public Enums.DialogTypes? Type { get; set; }
     [Parameter] public string? Message { get; set; }
 }

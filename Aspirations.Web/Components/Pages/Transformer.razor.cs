@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using Radzen;
 using System.Collections.Immutable;
 using System.Globalization;
+using System.Security.Cryptography;
 using System.Text;
 using System.Xml;
 using Formatting = Newtonsoft.Json.Formatting;
@@ -17,23 +18,24 @@ namespace Aspirations.Web.Components.Pages
 
         [Inject]
         private IJSRuntime JS { get; init; }
-
         [Inject]
         private DialogService DialogService { get; init; }
-
         [Inject]
         private ApiClient ApiClient { get; init; }
+        [Inject]
+        private IConfiguration Configuration { get; init; }
 
         #endregion
 
         #region Feilds
-        private record JsTransform(string Name, string Code);
+        private record JsTransform(int Id, string AddedBy, string Name, string Code);
         private StandaloneCodeEditor _editor { get; set; }
         private List<string> MonacoThemes = [];
         private List<JsTransform> JsTransforms = [];
         private int _height = 1000;
         private bool _dynamic, _sort;
         public string? Input, Output, Split, Join, BoundAll, BoundEach, MonacoTheme;
+        private string? _entry;
 
         #endregion
 
@@ -51,7 +53,8 @@ namespace Aspirations.Web.Components.Pages
                 MonacoThemes = Directory.GetFiles("wwwroot/themes/", "*.json")
                     .Select(x => Path.GetFileNameWithoutExtension(x)).ToList();
                 MonacoThemes.AddRange(["vs-dark", "vs-light"]);
-                JsTransforms = await ApiClient.GetAsync<List<JsTransform>>("/api/js_transforms/all");
+                JsTransforms = await ApiClient.GetAsync<List<JsTransform>>("/api/js_transforms/all") ?? [];
+                DialogService.OnClose += DialogClose;
             }
             catch (Exception ex)
             {
@@ -80,6 +83,15 @@ namespace Aspirations.Web.Components.Pages
                 await ChangeTheme(theme);
             }
             await InvokeAsync(StateHasChanged);
+        }
+
+        private void DialogClose(dynamic entry)
+        {
+            if (entry == null)
+                return;
+
+            _entry = $"{entry}";
+            StateHasChanged();
         }
 
         /// <summary>
@@ -624,7 +636,7 @@ namespace Aspirations.Web.Components.Pages
                     new Dictionary<string, object>
                     {
                         { "Type", Enums.DialogTypes.Error },
-                        { "Message", $"{ex.Message}\n{ex.StackTrace}" }
+                        { "Message", $"{ex.Message}\n\n{ex.StackTrace}" }
                     },
                     new DialogOptions()
                     {
@@ -640,18 +652,52 @@ namespace Aspirations.Web.Components.Pages
         /// <returns></returns>
         private async Task DeleteJs()
         {
-            await DialogService.OpenAsync<CustomDialog>(
-                "DeleteJs Error",
-                new Dictionary<string, object>
+            try
+            {
+                var userCode = await _editor.GetValue();
+                var name = userCode.Split("\n")[0];
+                var jsTransform = JsTransforms.FirstOrDefault(x => x.Name == name);
+                if (jsTransform == null)
+                    throw new ArgumentException("No code found to delete.");
+                if (await DialogService.Confirm(
+                    $"Are you sure you want to delete {name}?",
+                    "Final Confirmation",
+                    new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" }) ?? false)
                 {
-                    { "Type", Enums.DialogTypes.Error },
-                    { "Message", "Not Yet Implemented" }
-                },
-                new DialogOptions()
-                {
-                    Width = "50vw",
-                    Height = "50vh"
-                });
+                    await DialogService.OpenAsync<CustomDialog>("Password", new Dictionary<string, object>
+                    {
+                        { "Type", Enums.DialogTypes.Password },
+                        { "Message", "Please enter your key to permanently delete this code." }
+                    }, new DialogOptions() { Width = "600px", Height = "200px" });
+
+                    if (string.IsNullOrEmpty(_entry))
+                        throw new ArgumentException("Password is Empty");
+                    using var hash = SHA256.Create();
+                    if (Configuration.GetValue<string>("DeleteKey")
+                        !.Equals(Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(_entry)))))
+                    {
+                        var response = await ApiClient.DeleteAsync($"/api/js_transforms/delete/{jsTransform.Id}");
+                    }
+                    JsTransforms.Remove(jsTransform);
+                    await _editor.SetValue(string.Empty);
+                    await InvokeAsync(StateHasChanged);
+                }
+            }
+            catch (Exception ex)
+            {
+                await DialogService.OpenAsync<CustomDialog>(
+                    "DeleteJs Error",
+                    new Dictionary<string, object>
+                    {
+                        { "Type", Enums.DialogTypes.Error },
+                        { "Message", $"{ex.Message}\n\n{ex.StackTrace}" }
+                    },
+                    new DialogOptions()
+                    {
+                        Width = "50vw",
+                        Height = "50vh"
+                    });
+            }
         }
 
         /// <summary>
@@ -660,19 +706,28 @@ namespace Aspirations.Web.Components.Pages
         /// <returns></returns>
         private async Task SaveJs()
         {
-            await DialogService.OpenAsync<CustomDialog>(
+            try
+            {
+
+            }
+            catch (Exception ex)
+            {
+                await DialogService.OpenAsync<CustomDialog>(
                 "SaveJs Error",
                 new Dictionary<string, object>
                 {
                     { "Type", Enums.DialogTypes.Error },
-                    { "Message", "Not Yet Implemented" }
+                    { "Message", $"{ex.Message}\n\n{ex.StackTrace}" }
                 },
                 new DialogOptions()
                 {
                     Width = "50vw",
                     Height = "50vh"
                 });
+            }
         }
+
+
         #endregion
     }
 }

@@ -9,7 +9,8 @@
             Error,
             Success,
             ClassFromQuery,
-            XmlToClass
+            XmlToClass,
+            Password
         }
     }
 }
