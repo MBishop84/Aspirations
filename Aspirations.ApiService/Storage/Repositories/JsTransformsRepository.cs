@@ -33,7 +33,8 @@ namespace Aspirations.ApiService.Storage.Repositories
 
         public async Task<JsTransform> AddJsTransform(JsTransform jsTransform)
         {
-            var existing = await _context.JsTransforms.Where(x => x.Name == jsTransform.Name).FirstAsync();
+            var existing = await _context.JsTransforms.Where(x => x.Name == jsTransform.Name || 
+            x.Code == jsTransform.Code).FirstOrDefaultAsync();
             if (existing != null)
             {
                 jsTransform = await UpdateJsTransform(jsTransform);

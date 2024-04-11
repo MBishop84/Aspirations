@@ -29,19 +29,20 @@ namespace Aspirations.ApiService.Endpoints
             }
         }
 
-        private static async Task<Results<Ok<JsTransform>, NotFound<string>>> AddJsTransform(IJsTransformsRepository jsTransformsRepository, JsTransform jsTransform)
+        private static async Task<Results<Ok<JsTransform>, NotFound<string>>> AddJsTransform(
+            IJsTransformsRepository jsTransformsRepository, JsTransform jsTransform)
         {
             try
             {
-                jsTransform = new JsTransform
-                {
-                    AddedBy = string.IsNullOrEmpty(jsTransform.AddedBy) 
-                    ? "Unknown" : jsTransform.AddedBy,
-                    AddedOn = DateTime.Now,
-                    Name = jsTransform.Name,
-                    Code = jsTransform.Code
-                };
-                return TypedResults.Ok(await jsTransformsRepository.AddJsTransform(jsTransform));
+                return TypedResults.Ok(await jsTransformsRepository.AddJsTransform(
+                    new JsTransform
+                    {
+                        AddedBy = string.IsNullOrEmpty(jsTransform.AddedBy) 
+                        ? "Unknown" : jsTransform.AddedBy,
+                        AddedOn = DateTime.Now,
+                        Name = jsTransform.Name,
+                        Code = jsTransform.Code
+                    }));
             }
             catch (Exception ex)
             {

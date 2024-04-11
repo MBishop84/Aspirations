@@ -657,6 +657,7 @@ namespace Aspirations.Web.Components.Pages
                 var userCode = await _editor.GetValue();
                 var name = userCode.Split("\n")[0];
                 var jsTransform = JsTransforms.FirstOrDefault(x => x.Name == name);
+                var deleteMessage = $"{name} has been deleted from this instance.";
                 if (jsTransform == null)
                     throw new ArgumentException("No code found to delete.");
                 if (await DialogService.Confirm(
@@ -677,10 +678,13 @@ namespace Aspirations.Web.Components.Pages
                         !.Equals(Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(_entry)))))
                     {
                         var response = await ApiClient.DeleteAsync($"/api/js_transforms/delete/{jsTransform.Id}");
+                        response.EnsureSuccessStatusCode();
+                        deleteMessage = $"{name} has been permanently deleted from this instance.";
                     }
                     JsTransforms.Remove(jsTransform);
                     await _editor.SetValue(string.Empty);
                     await InvokeAsync(StateHasChanged);
+                    await DialogService.Alert(deleteMessage, "Success!");
                 }
             }
             catch (Exception ex)
@@ -703,12 +707,56 @@ namespace Aspirations.Web.Components.Pages
         /// <summary>
         /// Saves a new user code or updates an existing one.
         /// </summary>
-        /// <returns></returns>
         private async Task SaveJs()
         {
             try
             {
+                var userCode = await _editor.GetValue();
+                if (string.IsNullOrEmpty(userCode))
+                    throw new ArgumentException("Input is Empty");
+                var name = userCode.Split("\n")[0];
+                if (!await DialogService.Confirm(
+                    $"Is {name} the name for your transform?",
+                    "Confirmation",
+                    new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" }) ?? false)
+                {
+                    await DialogService.OpenAsync<CustomDialog>(
+                        "Enter Transform Name",
+                        new Dictionary<string, object>
+                        {
+                            { "Type", Enums.DialogTypes.Text },
+                            { "Message", "Please name your transform." }
+                        },
+                        new DialogOptions() { Width = "600px", Height = "200px" });
+                    if (string.IsNullOrEmpty(_entry))
+                        throw new ArgumentException("Transform Name is Empty");
+                    name = _entry.StartsWith("//") ? _entry : $"//{_entry}";
+                    _entry = null;
+                }
+                else{ userCode = userCode.Replace($"{name}\n", ""); }
 
+                await DialogService.OpenAsync<CustomDialog>(
+                    "Enter Name",
+                    new Dictionary<string, object>
+                    {
+                        { "Type", Enums.DialogTypes.Text },
+                        { "Message", "Please enter your name to take ownership of this transform." }
+                    },
+                    new DialogOptions() { Width = "600px", Height = "200px" });
+                if (string.IsNullOrEmpty(_entry))
+                    throw new ArgumentException("Name is Empty");
+
+                var newTransform = new JsTransform(0, _entry, name, userCode);
+
+                var response = await ApiClient.PostAsync<JsTransform>(
+                    "/api/js_transforms/add", newTransform);
+
+                response.EnsureSuccessStatusCode();
+                var content = await response.Content.ReadAsStringAsync();
+                JsTransforms.Add(JsonConvert.DeserializeObject<JsTransform>(content)!);
+                await InvokeAsync(StateHasChanged);
+                await DialogService.Alert(
+                    content, $"{response.StatusCode}");
             }
             catch (Exception ex)
             {
