@@ -33,10 +33,11 @@ namespace Aspirations.ApiService.Storage.Repositories
 
         public async Task<JsTransform> AddJsTransform(JsTransform jsTransform)
         {
-            var existing = await _context.JsTransforms.Where(x => x.Name == jsTransform.Name || 
+            var existing = await _context.JsTransforms.Where(x => x.Name == jsTransform.Name ||
             x.Code == jsTransform.Code).FirstOrDefaultAsync();
             if (existing != null)
             {
+                jsTransform.Id = existing.Id;
                 jsTransform = await UpdateJsTransform(jsTransform);
             }
             else
@@ -44,9 +45,8 @@ namespace Aspirations.ApiService.Storage.Repositories
                 await _context.JsTransforms.AddAsync(jsTransform);
                 await _context.SaveChangesAsync();
             }
-            if (jsTransform.AddedBy == "ArchBishop84")
-                File.WriteAllText("Storage/Data/JsTransforms.json", JsonConvert.SerializeObject(
-                    await _context.JsTransforms.ToListAsync()));
+            File.WriteAllText("Storage/Data/JsTransforms.json", JsonConvert.SerializeObject(
+                await _context.JsTransforms.ToListAsync(), Formatting.Indented));
 
             return jsTransform;
         }
