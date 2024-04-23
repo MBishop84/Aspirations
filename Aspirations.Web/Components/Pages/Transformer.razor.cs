@@ -5,7 +5,6 @@ using Newtonsoft.Json;
 using Radzen;
 using System.Collections.Immutable;
 using System.Globalization;
-using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography;
 using System.Text;
 using System.Xml;
@@ -542,18 +541,12 @@ namespace Aspirations.Web.Components.Pages
 
                 if (string.IsNullOrEmpty(userCode))
                     throw new ArgumentException("Please enter or choose a function.");
-                if (!userCode.Contains("output ="))
+                if (!userCode.Contains("output"))
                     throw new ArgumentException("Please assign a value to output");
-                if (!userCode.Contains("= input"))
+                if (!userCode.Contains("input"))
                     throw new ArgumentException("You must use the input.");
 
-                const string userBox = "const input = document.getElementById('input').value;\nlet output = '';\n[***]\ndocument.getElementById('output').value = output;";
-                var task = JS.InvokeAsync<string>("runUserScript", userBox.Replace("[***]", userCode)).AsTask();
-                if (await Task.WhenAny(task, Task.Delay(3)) != task)
-                {
-                    throw new ArgumentException("JavaScript Timeout. Please simplify your code.");
-                }
-                await task;
+                await JS.InvokeVoidAsync("runUserScript", userCode);
             }
             catch (Exception ex)
             {
@@ -747,7 +740,7 @@ namespace Aspirations.Web.Components.Pages
                     name = _entry.StartsWith("//") ? _entry : $"//{_entry}";
                     _entry = null;
                 }
-                else{ userCode = userCode.Replace($"{name}\n", ""); }
+                else { userCode = userCode.Replace($"{name}\n", ""); }
 
                 await DialogService.OpenAsync<CustomDialog>(
                     "Enter Name",
@@ -769,7 +762,7 @@ namespace Aspirations.Web.Components.Pages
                 JsTransforms.Add(JsonConvert.DeserializeObject<JsTransform>(content)!);
                 await InvokeAsync(StateHasChanged);
                 await DialogService.Alert(
-                    content.Replace(",", ",\n\t").Replace("{", "{\n\t"), 
+                    content.Replace(",", ",\n\t").Replace("{", "{\n\t"),
                     $"{response.StatusCode}");
             }
             catch (Exception ex)
