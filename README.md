@@ -10,3 +10,15 @@ I have it set up using the InMemoryDatabase and repositories that load data from
 This setup should only be used for testing purposes and that's pretty much what I'm doing with it to learn the minimal api design.
 
 A version of this I made using WebAssembly is hosted on GitHub Pages and can be found [here](https://mbishop84.github.io/GitTransformer/).
+
+---
+
+# Technologies
+- .NET Aspire
+- Blazor
+- C#
+- JavaScript
+- Minimal Api
+- EntityFramework
+- [Radzen](https://www.radzen.com/)
+- [BlazorMonaco](https://github.com/serdarciplak/BlazorMonaco)
